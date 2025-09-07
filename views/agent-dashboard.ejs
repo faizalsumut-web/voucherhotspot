@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Agen</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .container { margin-top: 50px; }
+        .card-balance { font-size: 2rem; font-weight: bold; }
+        .badge-topup { background-color: #28a745; }
+        .badge-sale { background-color: #dc3545; }
+        .voucher-code-list { font-size: 1.25rem; font-family: monospace; }
+        .voucher-code-list li { margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">Dashboard Agen</h1>
+        <a href="/logout" class="btn btn-danger mb-3 float-end">Logout</a>
+        <div class="clearfix"></div>
+
+        <% if (typeof low_balance_warning !== 'undefined' && low_balance_warning) { %>
+            <div class="alert alert-warning" role="alert">
+                <i class="bi bi-exclamation-triangle-fill"></i> <%= low_balance_warning %>
+            </div>
+        <% } %>
+
+        <% if (typeof error_message !== 'undefined' && error_message) { %>
+            <div class="alert alert-danger" role="alert">
+                <i class="bi bi-x-circle-fill"></i> <%= error_message %>
+            </div>
+        <% } %>
+
+        <div class="card bg-primary text-white mb-4">
+            <div class="card-body text-center">
+                <h5 class="card-title">Saldo Saat Ini:</h5>
+                <p class="card-text card-balance">Rp<%= balance.toLocaleString('id-ID') %></p>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">Jual Voucher</div>
+            <div class="card-body">
+                <form id="sellVoucherForm" action="/api/agent/sell-voucher" method="POST">
+                    <input type="hidden" name="agent_id" value="<%= agent_id %>">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="voucherPrice" class="form-label">Pilih Harga Voucher</label>
+                            <select id="voucherPrice" name="voucher_price" class="form-select" required>
+                                <option value="" disabled selected>Pilih Harga</option>
+                                <% availableVoucherPrices.forEach(price => { %>
+                                    <option value="<%= price %>">Rp<%= price.toLocaleString('id-ID') %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="quantity" class="form-label">Jumlah Voucher (1-10)</label>
+                            <input type="number" id="quantity" name="quantity" class="form-control" value="1" min="1" max="10" required>
+                        </div>
+                        <div class="col-12 d-flex align-items-end">
+                            <button type="submit" class="btn btn-success w-100">Jual</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">Riwayat Transaksi</div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Tipe</th>
+                            <th>Jumlah</th>
+                            <th>Kode Voucher</th>
+                            <th>Tanggal</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (transactions.length > 0) { %>
+                            <% transactions.forEach(t => { %>
+                                <tr>
+                                    <td>
+                                        <% if (t.type === 'topup') { %>
+                                            <span class="badge badge-topup">Top-Up</span>
+                                        <% } else { %>
+                                            <span class="badge badge-sale">Penjualan</span>
+                                        <% } %>
+                                    </td>
+                                    <td>Rp<%= t.amount.toLocaleString('id-ID') %></td>
+                                    <td><%= t.voucher_code || '-' %></td>
+                                    <td><%= new Date(t.transaction_date).toLocaleString('id-ID') %></td>
+                                    <td>
+                                        <% if (t.type === 'sale') { %>
+                                            <button onclick="printVoucher('<%= t.voucher_code %>')" class="btn btn-info btn-sm">Cetak</button>
+                                        <% } else { %>
+                                            -
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="5" class="text-center">Belum ada riwayat transaksi.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <% if (typeof sold_codes !== 'undefined' && sold_codes.length > 0) { %>
+            <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="successModalLabel">Penjualan Berhasil!</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Voucher berhasil dijual! Berikan kode berikut kepada pelanggan:</p>
+                            <ul class="list-group list-group-flush mt-3 voucher-code-list">
+                                <% sold_codes.forEach(code => { %>
+                                    <li class="list-group-item"><strong><%= code %></strong></li>
+                                <% }); %>
+                            </ul>
+                        </div>
+                        <div class="modal-footer">
+                            <button onclick="printVoucher('<%= sold_codes.join(',') %>')" class="btn btn-info me-2">Cetak</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const successModalEl = document.getElementById('successModal');
+            if (successModalEl) {
+                const myModal = new bootstrap.Modal(successModalEl);
+                myModal.show();
+            }
+        });
+
+        function printVoucher(codes) {
+            try {
+                const voucherCodes = codes.split(',');
+
+                // Membuat format cetak langsung di sini
+                let rawText = '';
+                
+                // Tambahkan header
+                rawText += `\x1b\x40`; // Reset printer
+                rawText += `\x1b\x61\x01`; // Align center
+                rawText += `================================\n`;
+                rawText += `  TINGGIRAJA HOTSPOT\n`;
+                rawText += `================================\n`;
+                
+                // Tambahkan kode voucher
+                rawText += `\x1b\x61\x00`; // Align left
+                voucherCodes.forEach(code => {
+                    rawText += `\nKode: ${code}\n`;
+                });
+                rawText += `\n`;
+                
+                // Tambahkan footer
+                rawText += `\x1b\x61\x01`; // Align center
+                rawText += `================================\n`;
+                rawText += `Terima kasih!\n\n\n`;
+                
+                // Mengonversi teks mentah menjadi format Base64
+                // Ini adalah cara paling andal untuk mengirim data teks mentah ke RawBT melalui URL
+                const base64Content = btoa(rawText);
+
+                // Mengirim konten Base64 ke RawBT
+                window.location.href = `rawbt:base64,${base64Content}`;
+                
+            } catch (error) {
+                console.error('Error saat mencetak:', error);
+                alert('Gagal mencetak. Pastikan aplikasi RawBT sudah terinstal.');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+ALTER TABLE users ADD COLUMN status ENUM('active', 'inactive') DEFAULT 'active';

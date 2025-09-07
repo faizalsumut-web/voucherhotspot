@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Penjualan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #f8f9fa; }
+        .container { margin-top: 50px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">Laporan Penjualan Voucher</h1>
+        <a href="/admin" class="btn btn-secondary mb-3">Kembali ke Dashboard</a>
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Filter Laporan</h5>
+                <form id="filterForm">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label for="startDate" class="form-label">Tanggal Awal</label>
+                            <input type="date" class="form-control" id="startDate" name="start_date" value="<%= start_date || '' %>">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="endDate" class="form-label">Tanggal Akhir</label>
+                            <input type="date" class="form-control" id="endDate" name="end_date" value="<%= end_date || '' %>">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="agentName" class="form-label">Nama Agen</label>
+                            <input type="text" class="form-control" id="agentName" name="agent_name" placeholder="Cari nama agen" value="<%= agent_name || '' %>">
+                        </div>
+                        <div class="col-12 text-center">
+                            <button type="submit" class="btn btn-primary">Terapkan Filter</button>
+                            <a href="/admin/sales-report" class="btn btn-danger">Hapus Filter</a>
+                            <a id="exportExcelBtn" href="#" class="btn btn-success">Ekspor ke Excel</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <h5 class="card-title">Total Pendapatan Kotor:</h5>
+                <p class="card-text fs-2">Rp<%= total_revenue.toLocaleString('id-ID') %></p>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">Grafik Penjualan Harian</div>
+            <div class="card-body">
+                <canvas id="salesChart" data-chart-data='<%- JSON.stringify(chart_data) %>'></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Daftar Voucher Terjual</div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Kode Voucher</th>
+                            <th>Harga</th>
+                            <th>Agen Penjual</th>
+                            <th>Tanggal Terjual</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (sales.length > 0) { %>
+                            <% sales.forEach(sale => { %>
+                                <tr>
+                                    <td><%= sale.code %></td>
+                                    <td>Rp<%= sale.price.toLocaleString('id-ID') %></td>
+                                    <td><%= sale.agent_username %></td>
+                                    <td><%= new Date(sale.sold_at).toLocaleString('id-ID') %></td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="4" class="text-center">Belum ada voucher yang terjual dengan filter ini.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('salesChart');
+        const rawSalesData = canvas.getAttribute('data-chart-data');
+        const salesData = JSON.parse(rawSalesData);
+
+        const labels = salesData.map(item => item.date);
+        const data = salesData.map(item => item.total);
+
+        new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Pendapatan Harian (Rp)',
+                    data: data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Logika untuk tombol ekspor Excel
+        const exportBtn = document.getElementById('exportExcelBtn');
+        exportBtn.addEventListener('click', function(event) {
+            // Dapatkan nilai dari input filter
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const agentName = document.getElementById('agentName').value;
+
+            // Bangun URL dengan parameter query
+            let exportUrl = '/api/admin/export-sales?';
+            const params = [];
+            if (startDate) params.push(`start_date=${startDate}`);
+            if (endDate) params.push(`end_date=${endDate}`);
+            if (agentName) params.push(`agent_name=${encodeURIComponent(agentName)}`);
+            
+            exportUrl += params.join('&');
+
+            // Arahkan browser untuk mengunduh file
+            exportBtn.href = exportUrl;
+        });
+    </script>
+</body>
+</html>

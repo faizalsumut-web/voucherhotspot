@@ -1,0 +1,7 @@
+CREATE TABLE logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    action VARCHAR(255) NOT NULL,
+    username VARCHAR(255) NOT NULL,
+    details JSON
+);

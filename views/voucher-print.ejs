@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cetak Voucher</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #000;
+        }
+        .container {
+            width: 80mm; /* Ukuran untuk kertas struk */
+            margin: 0 auto;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 1.5rem;
+            margin: 0;
+        }
+        .header p {
+            margin: 5px 0;
+            font-size: 0.8rem;
+        }
+        .voucher-code {
+            font-size: 2.5rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin: 20px 0;
+        }
+        .info-table {
+            width: 100%;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .info-table td {
+            padding: 4px 0;
+            font-size: 0.9rem;
+        }
+        .footer p {
+            font-size: 0.7rem;
+            margin: 5px 0;
+        }
+        /* Sembunyikan semua elemen saat tidak dicetak */
+        @media screen {
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body onload="window.print(); window.onafterprint = () => window.close();">
+    <div class="container">
+        <div class="header">
+            <h1>Bukti Voucher</h1>
+            <p><strong>Harga:</strong> Rp<%= parseFloat(price).toLocaleString() %></p>
+        </div>
+        <div class="voucher-code">
+            <%= code %>
+        </div>
+        <table class="info-table">
+            <tbody>
+                <tr>
+                    <td>Status</td>
+                    <td>: <%= status %></td>
+                </tr>
+                <tr>
+                    <td>Tanggal Jual</td>
+                    <td>: <%= new Date(sold_at).toLocaleString() %></td>
+                </tr>
+                <tr>
+                    <td>Dijual oleh</td>
+                    <td>: <%= agent_username || '-' %></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="footer">
+            <p>Terima kasih telah berbelanja.</p>
+        </div>
+    </div>
+</body>
+</html>
