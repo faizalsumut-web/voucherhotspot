@@ -131,13 +131,22 @@
                         <input type="password" name="password" id="password" required
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2">
                     </div>
-                    <div class="mb-4">
+                    <div class="mb-2">
                         <label for="role" class="block text-sm font-medium text-gray-700">Role</label>
                         <select name="role" id="role" required
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2">
                             <option value="admin">Admin</option>
                             <option value="agent">Agen</option>
                         </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="city" class="block text-sm font-medium text-gray-700">Kota</label>
+                        <select name="city" id="city" required
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2">
+                            <option value="">Pilih Kota</option>
+                            <option value="Bahoan">Bahoan</option>
+                            <option value="Dolok Merawa">Dolok Merawa</option>
+                            </select>
                     </div>
                     <button type="submit"
                         class="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition duration-150 ease-in-out">
@@ -153,7 +162,7 @@
                         <label for="agent_id" class="block text-sm font-medium text-gray-700">Pilih Agen</label>
                         <select name="agent_id" id="agent_id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2">
                             <% agents.forEach(agent => { %>
-                                <option value="<%= agent.id %>"><%= agent.username %> (ID: <%= agent.id %>)</option>
+                                <option value="<%= agent.id %>"><%= agent.username %> (ID: <%= agent.id %>) - <%= agent.city %></option>
                             <% }); %>
                         </select>
                     </div>
@@ -176,6 +185,7 @@
                         <tr>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kota</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Saldo</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
@@ -186,6 +196,7 @@
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><%= agent.id %></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><%= agent.username %></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><%= agent.city || 'N/A' %></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rp<%= agent.balance.toLocaleString('id-ID') %></td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span
@@ -221,6 +232,15 @@
                 <h3 class="text-lg font-medium mb-2 text-gray-700">Impor Voucher dari Excel</h3>
                 <form action="/api/admin/import-vouchers" method="POST" enctype="multipart/form-data">
                     <div class="mb-4">
+                        <label for="import_city" class="block text-sm font-medium text-gray-700">Kota Voucher</label>
+                        <select name="city" id="import_city" required
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2">
+                            <option value="">Pilih Kota</option>
+                            <option value="Bahoan">Bahoan</option>
+                            <option value="Dolok Merawa">Dolok Merawa</option>
+                            </select>
+                    </div>
+                    <div class="mb-4">
                         <label for="file" class="block text-sm font-medium text-gray-700">Pilih file Excel (.xlsx, .xls)</label>
                         <input type="file" name="file" id="file" required
                             class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
@@ -245,6 +265,15 @@
                         <input type="date" id="endDate" name="endDate" value="<%= endDate %>" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 px-3 py-2">
                     </div>
                     <div class="flex-1 w-full">
+                        <label for="city_filter" class="block text-sm font-medium text-gray-700">Filter Kota:</label>
+                        <select name="city_filter" id="city_filter" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 px-3 py-2">
+                            <option value="" <%= city_filter === '' ? 'selected' : '' %>>Semua Kota</option>
+                            <% availableCities.forEach(city => { %>
+                                <option value="<%= city %>" <%= city_filter === city ? 'selected' : '' %>><%= city %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="flex-1 w-full">
                         <label for="search" class="block text-sm font-medium text-gray-700">Cari Voucher:</label>
                         <input type="text" id="search" name="search" value="<%= search_query %>" placeholder="Cari kode voucher..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 px-3 py-2">
                     </div>
@@ -257,11 +286,12 @@
             </div>
             <div class="overflow-x-auto rounded-lg border border-gray-200 max-h-96 overflow-y-auto">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50 **sticky top-0**">
+                    <thead class="bg-gray-50 sticky top-0">
                         <tr>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harga</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dijual Oleh</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kota</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Jual</th>
                         </tr>
@@ -272,6 +302,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><%= voucher.code %></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rp<%= voucher.price.toLocaleString('id-ID') %></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><%= voucher.agent_username || 'N/A' %></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><%= voucher.agent_city || 'N/A' %></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                                     <span
                                         class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <%= voucher.status === 'sold' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' %>">
